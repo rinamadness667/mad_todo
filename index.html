@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Todo</title>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="main">
+    <a id="btn-common">Create a New ToDo</a>
+
+</div>
+<div>
+    <form id="add-todo">
+        <input autofocus id="new-todo" class="placeholder" placeholder="Write the task here" 
+        autocomplete="off">
+        <button type="submit" class="buttons" id="btn-enter">Enter</button>
+    </form>
+</div>
+
+<div>
+    <input type="checkbox" id="check-all">
+    <label class="check-all" for="check-all">Check all</label>
+        <button type="button" class="buttons" id="btn-all">All</button>
+        <button type="button" class="buttons" id="btn-active">Active</button>
+        <button type="button" class="buttons" id="btn-complete">Complete</button>
+        <button type="button" class="buttons" id="btn-delete">Delete</button>
+</div>
+<div class="container"></div>
+<div id ="pagination" class="pagination"></div>
+<div>
+    <ol id="todoList" class="todo-list"></ol>
+</div>
+<script src="js.js"></script>
+</body>
+</html>
