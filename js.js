@@ -1,5 +1,6 @@
 $(document).ready(() => {
-  let todoList = [];
+
+  let todoList = JSON.parse(localStorage.getItem('todo')) || [];
   let filter = 'all';
   let currentPage = 1;
 
@@ -22,7 +23,7 @@ $(document).ready(() => {
       '&': '&amp;',
       '\'': '&#39;',
       '/': '&#x2F;',
-      '<': '&lt;',
+      '<': '&lt;', 
       '=': '&#x3D;',
       '>': '&gt;',
       '`': '&#x60;',
@@ -49,7 +50,6 @@ $(document).ready(() => {
     return filterTodo;
   };
 
-
   const condition = () => Math.ceil(filtration().length / TODO_PER_PAGE);
 
   const currentCondition = () => {
@@ -57,7 +57,6 @@ $(document).ready(() => {
       currentPage = condition();
     }
   };
-
 
   const slicingPages = () => {
     const maxTasks = currentPage * TODO_PER_PAGE;
@@ -94,11 +93,16 @@ $(document).ready(() => {
     addNewPage();
   };
 
+  const getLocalStorage = () => {
+    const item = JSON.stringify(todoList); 
+
+    let setItem = localStorage.setItem('todo', item);
+    let getItem = localStorage.getItem('todo');
+  };
 
   const render = () => {
     $todoList.empty();
     let str = ``;
-
 
     slicingPages()
       .forEach(item => {
@@ -120,9 +124,11 @@ $(document).ready(() => {
     } else {
       $checkAll.prop('checked', false);
     }
-
     counter();
+    getLocalStorage();
   };
+
+  render();
 
   const createTodo = event => {
     filter = 'all';
@@ -141,6 +147,7 @@ $(document).ready(() => {
       });
       $newTodo.val('');
       currentPage = condition();
+      getLocalStorage();
       render();
     }
 
@@ -271,5 +278,6 @@ $(document).ready(() => {
   $btnActive.on('click', activeOnClick);
   $btnComplete.on('click', completeOnClick);
 });
+
 
 
