@@ -8,9 +8,7 @@ $(document).ready(() => {
   const $newTodo = $('#new-todo');
   const $addTodo = $('#add-todo');
   const $checkAll = $('#check-all');
-  const $btnAll = $('#btn-all');
-  const $btnActive = $('#btn-active');
-  const $btnComplete = $('#btn-complete');
+  const $buttons = $('.buttons');
   const $btnDelete = $('#btn-delete');
   const $pagination = $('#pagination');
   const $container = $('.container');
@@ -67,17 +65,26 @@ $(document).ready(() => {
     return filterTodo.slice(firstTaskOnPage, lastTaskOnPage);
   };
 
+  const sortStatus = () => {
+    const status = todoList.length
+      && todoList.every(item => item.status === true);
+    const statusOfSort = Boolean(status);
+
+    $checkAll.prop('checked', statusOfSort);
+  };
+
   const addNewPage = () => {
     $pagination.empty();
     let str = ``;
 
     for (let i = 1; i <= condition(); i++) {
-      $pagination.html(str += `<input type="button" class="pagination
-        ${i === (currentPage && 'active-page')}" id="page" value="${i}">`);
+      str += `<button class="pagination" 
+        id="page" value="${i}">${i}</button>`;
     }
 
     $pagination.html(str);
-    $(`input[value=${currentPage}]`).addClass('active-page');
+    $(`button[value=${currentPage}]`).addClass('active-page');
+    sortStatus();
   };
 
   const counter = () => {
@@ -96,8 +103,8 @@ $(document).ready(() => {
   const getLocalStorage = () => {
     const item = JSON.stringify(todoList); 
 
-    let setItem = localStorage.setItem('todo', item);
-    let getItem = localStorage.getItem('todo');
+    localStorage.setItem('todo', item);
+    localStorage.getItem('todo');
   };
 
   const render = () => {
@@ -131,10 +138,7 @@ $(document).ready(() => {
   render();
 
   const createTodo = event => {
-    filter = 'all';
-    $btnAll.addClass('active');
-    $btnActive.removeClass('active');
-    $btnComplete.removeClass('active');
+    changeFilter('btn-all');
     event.preventDefault();
     const todo = $newTodo.val()
       .trim();
@@ -154,31 +158,16 @@ $(document).ready(() => {
     $newTodo.val('');
   };
 
-  const changeFilter = () => {
-    $(event.currentTarget).addClass('active');
+  const changeFilter = tabId => {
+    const chosenFilter = $(event.currentTarget).attr('id');
+    const index = 4;
+
+    $buttons.removeClass('active');
+    $(`#${tabId}`).addClass('active');
+    filter = chosenFilter.substr(index);
+
     currentPage = condition();
     render();
-  };
-
-  const allOnClick = () => {
-    filter = 'all';
-    $btnActive.removeClass('active');
-    $btnComplete.removeClass('active');
-    changeFilter();
-  };
-
-  const activeOnClick = () => {
-    filter = 'active';
-    $btnAll.removeClass('active');
-    $btnComplete.removeClass('active');
-    changeFilter();
-  };
-
-  const completeOnClick = () => {
-    filter = 'complete';
-    $btnAll.removeClass('active');
-    $btnActive.removeClass('active');
-    changeFilter();
   };
 
   const changeCurrentPage = event => {
@@ -274,10 +263,9 @@ $(document).ready(() => {
   $pagination.on('click', 'input[type=button]', changeCurrentPage);
   $todoList.on('change', 'input[type=checkbox]', changeCheckStatus);
   $todoList.on('dblclick', 'span', editByDblclick);
-  $btnAll.on('click', allOnClick);
-  $btnActive.on('click', activeOnClick);
-  $btnComplete.on('click', completeOnClick);
+  $buttons.on('click', function() {
+    const currentIdTab = $(this).attr(`id`);
+
+    changeFilter(currentIdTab);
+  });
 });
-
-
-
