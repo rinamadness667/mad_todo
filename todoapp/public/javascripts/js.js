@@ -1,6 +1,5 @@
 $(document).ready(() => {
-
-  let todoList = JSON.parse(localStorage.getItem('todo')) || [];
+  let todoList = [];
   let filter = 'all';
   let currentPage = 1;
 
@@ -8,20 +7,20 @@ $(document).ready(() => {
   const $newTodo = $('#new-todo');
   const $addTodo = $('#add-todo');
   const $checkAll = $('#check-all');
-  const $buttons = $('.buttons');
   const $btnDelete = $('#btn-delete');
   const $pagination = $('#pagination');
   const $container = $('.container');
+  const $buttons = $('.buttons');
   const ENTER = 13;
   const TODO_PER_PAGE = 5;
 
-  const scriptReplace = function(name) {
+  const scriptReplace = name => {
     const eMap = {
       '"': '&quot;',
       '&': '&amp;',
       '\'': '&#39;',
       '/': '&#x2F;',
-      '<': '&lt;', 
+      '<': '&lt;',
       '=': '&#x3D;',
       '>': '&gt;',
       '`': '&#x60;',
@@ -47,9 +46,8 @@ $(document).ready(() => {
 
     return filterTodo;
   };
-  
-  const condition = () => Math.ceil(filtration().length / TODO_PER_PAGE);
 
+  const condition = () => Math.ceil(filtration().length / TODO_PER_PAGE);
   const currentCondition = () => {
     if (currentPage >= condition()) {
       currentPage = condition();
@@ -100,62 +98,34 @@ $(document).ready(() => {
     addNewPage();
   };
 
-  const getLocalStorage = () => {
-    const item = JSON.stringify(todoList); 
-
-    localStorage.setItem('todo', item);
-    localStorage.getItem('todo');
-  };
-
   const render = () => {
     $todoList.empty();
     let str = ``;
 
     slicingPages()
       .forEach(item => {
-        const inputText = scriptReplace(item.text);
-
-        str += `<li id="${item.id}">
+        str += `<li id="${item._id}">
         <input type="checkbox" class="checkbox" ${item.status ? 'checked' : ''}>
-        <span id="toDo">${inputText}</span>
+        <span id="toDo">${item.text}</span>
         <input type="button" id="X" class="button-x" value="X">
         </li>`;
       });
 
     $todoList.html(str);
 
-    if (todoList.length) {
-      const statusCheckAll = todoList.every(el => el.status === true);
-
-      $checkAll.prop('checked', statusCheckAll);
-    } else {
-      $checkAll.prop('checked', false);
-    }
     counter();
-    getLocalStorage();
   };
 
-  render();
-
-  const createTodo = event => {
-    changeFilter('btn-all');
-    event.preventDefault();
-    const todo = $newTodo.val()
-      .trim();
-
-    if (todo) {
-      todoList.push({
-        id: Math.random(),
-        status: false,
-        text: todo,
+  const getTodoList = () => {
+    fetch('/getTodo', { method: 'GET' })
+      .then(res => res.json())
+      .then(res => {
+        todoList = res;
+        render();
+      })
+      .catch(err => {
+        console.log(err);
       });
-      $newTodo.val('');
-      currentPage = condition();
-      getLocalStorage();
-      render();
-    }
-
-    $newTodo.val('');
   };
 
   const changeFilter = tabId => {
@@ -175,33 +145,92 @@ $(document).ready(() => {
     render();
   };
 
-  const deleteSingleTask = event => {
-    const currentId = Number($(event.currentTarget.parentElement).attr('id'));
+  const createTodo = event => {
+    changeFilter('btn-all');
+    event.preventDefault();
+    const content = $newTodo.val()
+      .trim();
 
-    todoList = todoList.filter(el => el.id !== currentId);
-    currentCondition();
-    render();
+    if (content) {
+      const todo = {
+        status: false,
+        text: scriptReplace(content),
+      };
+
+      fetch('/add', {
+        body: JSON.stringify(todo),
+        headers: { 'Content-type': 'application/json' },
+        method: 'POST',
+      })
+        .then(res => res.json())
+        .then(res => {
+          todoList.push(res);
+          $newTodo.val('');
+          currentPage = condition();
+          render();
+        });
+    }
+
+    $newTodo.val('');
+    sortStatus();
+  };
+
+  const deleteSingleTask = event => {
+    const currentId = $(event.currentTarget).parent()
+      .attr('id');
+    const index = Number(todoList.findIndex(item => item._id === currentId));
+
+    fetch(`/delete/${currentId}`, { method: 'DELETE' })
+      .then(() => {
+        todoList.splice(index, 1);
+        currentCondition();
+        sortStatus();
+        render();
+      });
+  };
+
+  const changeTodo = (changes, currentId) => {
+    fetch(`/changeCurrent/${currentId}`, {
+      body: JSON.stringify(changes),
+      headers: { 'Content-type': 'application/json' },
+      method: 'PUT',
+    })
+      .then(() => {
+        todoList.forEach(item => {
+          if (changes.text && item._id === currentId) {
+            const { text } = changes;
+
+            item.text = text;
+          } else if (item._id === currentId) {
+            const { status } = changes;
+
+            item.status = status;
+          }
+        });
+        currentCondition();
+        sortStatus();
+        render();
+      });
   };
 
   const changeCheckStatus = event => {
-    const currentId = Number($(event.currentTarget.parentElement).attr('id'));
+    const currentId = $(event.currentTarget).parent()
+      .attr('id');
+    const statusTodo = $(event.currentTarget).is(':checked');
+    const changes = { status: statusTodo };
 
 
-    todoList.forEach(item => {
-      if (item.id === currentId) {
-        item.status = !item.status;
-      }
-    });
-
-    currentCondition();
-    render();
+    changeTodo(changes, currentId);
   };
 
   const deleteAllChecked = () => {
-    todoList = todoList.filter(el => el.status === false);
-
-    currentCondition();
-    render();
+    fetch('/delete', { method: 'DELETE' })
+      .then(() => {
+        todoList = todoList.filter(el => el.status === false);
+        currentCondition();
+        sortStatus();
+        render();
+      });
   };
 
   const editByDblclick = event => {
@@ -212,7 +241,6 @@ $(document).ready(() => {
       .html(`<input type="text" id="edit" value="">`);
     const $edit = $('#edit');
 
-
     $edit.focus();
     $edit.val(prevValue);
   };
@@ -220,18 +248,19 @@ $(document).ready(() => {
   const editSave = () => {
     const editText = $('#edit').val()
       .trim();
-    const currentId = Number($(event.target).parent()
-      .attr('id'));
+    const currentId = $(event.target).parent()
+      .attr('id');
 
     if (editText) {
       todoList.forEach(item => {
-        if (item.id === currentId) {
-          item.text = editText;
+        if (item._id === currentId) {
+          item.text = scriptReplace(editText);
         }
       });
-      render();
-    } else {
-      render();
+
+      const changes = { text: editText };
+
+      changeTodo(changes, currentId);
     }
   };
 
@@ -243,24 +272,33 @@ $(document).ready(() => {
 
   const checkAllTasks = event => {
     const [{ checked: checkStatus }] = $(event.currentTarget);
+    const body = { status: checkStatus };
 
-    todoList.forEach(item => {
-      item.status = checkStatus;
-    });
+    fetch('/checkAll', {
+      body: JSON.stringify(body),
+      headers: { 'Content-type': 'application/json' },
+      method: 'PUT',
+    })
+      .then(() => {
+        todoList.forEach(item => {
+          item.status = checkStatus;
+        });
 
-    if (filter !== 'all') {
-      currentPage = condition();
-    }
-    render();
+        if (filter !== 'all') {
+          currentPage = condition();
+        }
+        render();
+      });
   };
 
+  $(document).on('ready', getTodoList());
   $addTodo.on('submit', createTodo);
   $todoList.on('blur', '#edit', editSave);
   $todoList.on('keypress', '#edit', saveEditByEnter);
   $todoList.on('click', 'input[type=button]', deleteSingleTask);
-  $checkAll.on('click', checkAllTasks);
+  $checkAll.on('change', checkAllTasks);
   $btnDelete.on('click', deleteAllChecked);
-  $pagination.on('click', 'input[type=button]', changeCurrentPage);
+  $pagination.on('click', 'button', changeCurrentPage);
   $todoList.on('change', 'input[type=checkbox]', changeCheckStatus);
   $todoList.on('dblclick', 'span', editByDblclick);
   $buttons.on('click', function() {

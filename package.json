@@ -1,23 +1,19 @@
 {
-  "name": "mad_todo",
+  "name": "todoapp",
   "version": "1.0.0",
-  "description": "",
-  "main": "js.js",
+  "main": "todoapp/public/javascripts/js.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rinamadness667/mad_todo.git"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./bin/www",
+    "dev": "nodemon ./bin/www"
   },
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/rinamadness667/mad_todo/issues"
-  },
-  "homepage": "https://github.com/rinamadness667/mad_todo#readme",
+  "description": "",
   "dependencies": {
-    "express": "^4.17.1",
-    "mongoose": "^5.7.8"
+    "body-parser": "^1.18.0",
+    "express": "^4.16.0",
+    "http-status-codes": "^1.4.0",
+    "mongodb": "^3.1.0"
   }
 }

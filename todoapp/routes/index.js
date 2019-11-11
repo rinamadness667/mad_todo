@@ -1,9 +1,13 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = new express.Router();
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
+const controller = require('../controllers/todoController');
+
+router.get('/getTodo', controller.getTodoList);
+router.post('/add', controller.addTodo);
+router.delete('/delete/:id', controller.deleteSingle);
+router.delete('/delete', controller.deleteChecked);
+router.put('/changeCurrent/:id', controller.changeCurrent);
+router.put('/checkAll', controller.checkAll);
 
 module.exports = router;
